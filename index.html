@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Studenti Infermieristica e OSS · Zona Mugello</title>
+<style>
+  :root{
+    --bg: #f6f4ef;
+    --paper: #ffffff;
+    --ink: #1f2a26;
+    --ink-soft: #5b6660;
+    --line: #ddd6c8;
+    --teal: #0e6e5e;
+    --teal-deep: #0a4f44;
+    --amber: #c9762a;
+    --amber-bg: #fdf1e2;
+    --rose: #b3493f;
+    --rose-bg: #fbeae8;
+    --sage: #7c9885;
+    --sky: #4a7fa6;
+    font-size: 16px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:var(--bg); color:var(--ink); }
+  body{ font-family: "Georgia", "Iowan Old Style", serif; -webkit-font-smoothing: antialiased; }
+  .sans{ font-family: "Helvetica Neue", Arial, sans-serif; }
+  .wrap{ max-width: 1180px; margin: 0 auto; padding: 28px 24px 60px; }
+
+  header.top{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom: 3px solid var(--ink);
+    padding-bottom: 16px; margin-bottom: 22px; flex-wrap: wrap; gap: 14px;
+  }
+  .brand-eyebrow{
+    font-family:"Helvetica Neue",Arial,sans-serif; text-transform: uppercase;
+    letter-spacing: .14em; font-size: .7rem; color: var(--teal-deep); font-weight: 700; margin-bottom: 6px;
+  }
+  h1{ font-size: 2.1rem; margin: 0; line-height: 1.1; font-weight: 400; letter-spacing: -0.01em; }
+  h1 em{ font-style: italic; color: var(--teal); }
+  .top-meta{ font-family:"Helvetica Neue",Arial,sans-serif; font-size: .78rem; color: var(--ink-soft); text-align: right; line-height: 1.5; }
+
+  .sync-row{
+    display:flex; align-items:center; gap:10px; justify-content:flex-end; margin-top:4px;
+  }
+  .sync-status{
+    font-family:"Helvetica Neue",Arial,sans-serif; font-size:.72rem; display:flex; align-items:center; gap:6px; color: var(--sage);
+  }
+  .sync-status .dot{ width:7px; height:7px; border-radius:50%; background:var(--sage); }
+  .sync-status.loading{ color: var(--amber); }
+  .sync-status.loading .dot{ background: var(--amber); animation: pulse 1s infinite; }
+  .sync-status.error{ color: var(--rose); }
+  .sync-status.error .dot{ background: var(--rose); }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  .btn-refresh{
+    font-family:"Helvetica Neue",Arial,sans-serif; font-size:.72rem;
+    border:1px solid var(--line); background:var(--paper); color:var(--ink-soft);
+    padding:5px 10px; border-radius:3px; cursor:pointer;
+  }
+  .btn-refresh:hover{ border-color:var(--ink); color:var(--ink); }
+
+  .stats{
+    display:grid; grid-template-columns: repeat(5, 1fr); gap: 1px;
+    background: var(--line); border: 1px solid var(--line); margin-bottom: 26px;
+  }
+  .stat{ background: var(--paper); padding: 14px 16px; font-family:"Helvetica Neue",Arial,sans-serif; }
+  .stat .n{ font-size: 1.7rem; font-weight: 700; color: var(--teal-deep); line-height:1; }
+  .stat .n.warn{ color: var(--amber); }
+  .stat .l{ font-size: .68rem; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); margin-top: 5px; }
+
+  .alert-banner{
+    background: var(--amber-bg); border: 1px solid #ecc285; border-left: 5px solid var(--amber);
+    padding: 13px 18px; margin-bottom: 26px; font-family:"Helvetica Neue",Arial,sans-serif;
+    font-size: .86rem; display:flex; align-items:center; gap: 12px; color: #6b4317;
+  }
+  .alert-banner .ico{ font-size:1.2rem; flex-shrink:0; }
+  .alert-banner b{ color: #5a3712; }
+
+  .error-banner{
+    background: var(--rose-bg); border: 1px solid #e3a39c; border-left: 5px solid var(--rose);
+    padding: 16px 18px; margin-bottom: 26px; font-family:"Helvetica Neue",Arial,sans-serif;
+    font-size: .86rem; color: #7a2c24; display:none;
+  }
+  .error-banner.show{ display:block; }
+  .error-banner code{ background:rgba(0,0,0,.05); padding:1px 5px; border-radius:3px; font-size:.8em; }
+
+  .controls{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom: 18px; font-family:"Helvetica Neue",Arial,sans-serif; }
+  .controls input[type=search]{ flex: 1 1 220px; padding: 9px 12px; border: 1px solid var(--line); background: var(--paper); font-family: inherit; font-size: .88rem; border-radius: 3px; }
+  .controls select{ padding: 9px 10px; border: 1px solid var(--line); background: var(--paper); font-family: inherit; font-size: .85rem; border-radius: 3px; color: var(--ink); }
+  .controls .chip-toggle{ padding: 9px 13px; border: 1px solid var(--line); background: var(--paper); font-size: .82rem; border-radius: 3px; cursor: pointer; color: var(--ink-soft); user-select:none; }
+  .controls .chip-toggle.active{ background: var(--rose-bg); border-color: var(--rose); color: var(--rose); font-weight: 600; }
+  .controls .chip-toggle.active-teal{ background: #e3efea; border-color: var(--teal); color: var(--teal-deep); font-weight: 600; }
+  .view-toggle{ display:flex; gap:0; border:1px solid var(--ink); border-radius:3px; overflow:hidden; }
+  .view-toggle button{ font-family:"Helvetica Neue",Arial,sans-serif; font-size:.82rem; padding: 9px 16px; border:none; background: var(--paper); color: var(--ink); cursor:pointer; }
+  .view-toggle button.active{ background: var(--ink); color: var(--paper); }
+
+  .print-actions{ display:flex; gap:8px; margin-left:auto; }
+  .period-filter{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    padding: 10px 14px; background: #f0ede4; border-radius:4px;
+    font-family:"Helvetica Neue",Arial,sans-serif; font-size:.82rem;
+    color: var(--ink-soft); width:100%;
+  }
+  .period-filter label{ font-weight:600; color:var(--ink); white-space:nowrap; }
+  .period-filter input[type=date]{
+    padding: 7px 10px; border:1px solid var(--line); border-radius:3px;
+    font-family:inherit; font-size:.82rem; background:var(--paper); color:var(--ink);
+  }
+  .period-filter input[type=date].active{ border-color:var(--teal); background:#e3efea; }
+  .period-filter .sep{ color:var(--ink-soft); }
+  .btn-reset-period{
+    font-family:"Helvetica Neue",Arial,sans-serif; font-size:.75rem;
+    border:1px solid var(--line); background:var(--paper); color:var(--ink-soft);
+    padding:6px 10px; border-radius:3px; cursor:pointer; white-space:nowrap;
+  }
+  .btn-reset-period:hover{ border-color:var(--rose); color:var(--rose); }
+  .btn-print{
+    font-family:"Helvetica Neue",Arial,sans-serif; font-size:.82rem;
+    border:1px solid var(--ink); background:var(--paper); color:var(--ink);
+    padding:9px 14px; border-radius:3px; cursor:pointer; white-space:nowrap;
+    display:inline-block; text-decoration:none; line-height:1.2;
+  }
+  .btn-print:hover{ background:var(--ink); color:var(--paper); }
+  .btn-print.secondary{ border-color:var(--line); color:var(--ink-soft); }
+  .btn-print.secondary:hover{ background:var(--ink-soft); color:var(--paper); border-color:var(--ink-soft); }
+
+  .print-header{ display:none; }
+
+  @media print{
+    body{ background:#fff; }
+    .wrap{ max-width:100%; padding:0; }
+    .controls, .sync-row, .btn-refresh, .print-actions, .alert-banner, .error-banner, footer.foot{ display:none !important; }
+    header.top{ border-bottom-color:#000; margin-bottom:10px; padding-bottom:8px; }
+    .stats{ margin-bottom:14px; break-inside:avoid; }
+    .stat .n{ color:#000; }
+    .stat .n.warn{ color:#000; font-weight:900; }
+    .panel{ border:none; }
+    #timelineView{ display:none !important; }
+    #tableView{ display:block !important; }
+    table.roster thead th{ background:#000 !important; color:#fff !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    table.roster tbody tr{ break-inside:avoid; }
+    .missing{ border:1px solid #000; background:#fff !important; color:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    .setting-group{ break-inside:avoid; }
+    .print-header{
+      display:block; font-family:"Helvetica Neue",Arial,sans-serif;
+      font-size:.78rem; color:#333; margin-bottom:14px; padding-bottom:8px; border-bottom:1px solid #999;
+    }
+    .print-header .filters{ font-weight:700; margin-top:3px; }
+    a[href]::after{ content:""; }
+  }
+
+  .panel{ background: var(--paper); border: 1px solid var(--line); }
+  table.roster{ width: 100%; border-collapse: collapse; font-family:"Helvetica Neue",Arial,sans-serif; font-size: .84rem; }
+  table.roster thead th{ text-align: left; padding: 11px 12px; background: var(--ink); color: #f0ece2; font-weight: 600; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap; }
+  table.roster tbody td{ padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  table.roster tbody tr:hover{ background: #faf8f2; }
+  .student-name{ font-weight: 700; color: var(--ink); }
+  .student-sub{ font-size:.74rem; color: var(--ink-soft); }
+  .badge{ display:inline-block; padding: 3px 9px; border-radius: 20px; font-size: .72rem; font-weight: 600; white-space:nowrap; }
+  .badge-anno1{ background:#e7eef4; color:var(--sky); }
+  .badge-anno2{ background:#eaf2ec; color:var(--sage); }
+  .badge-anno3{ background:#e3efea; color:var(--teal-deep); }
+  .badge-corso-inf{ background:#e7eef4; color:var(--sky); font-weight:700; }
+  .badge-corso-oss{ background:#fdf1e2; color:var(--amber); font-weight:700; }
+  .missing{ display:inline-flex; align-items:center; gap:5px; padding: 3px 9px; border-radius: 20px; font-size: .72rem; font-weight: 700; background: var(--rose-bg); color: var(--rose); border: 1px dashed var(--rose); }
+  .student-sub ~ * [title="Valutazione consegnata"], td [title="Valutazione consegnata"]{ color:#c9a227; }
+  .missing::before{ content:"⚠"; font-size:.8rem; }
+  .ok-dot{ color: var(--sage); font-weight: 700; }
+  .no-dot{ color: var(--ink-soft); }
+  tr.row-missing{ box-shadow: inset 3px 0 0 var(--amber); }
+  tr.row-sospeso{ box-shadow: inset 3px 0 0 var(--ink-soft); opacity:.7; }
+
+  .timeline-wrap{ padding: 22px; }
+  .month-row{ display:grid; grid-template-columns: 150px repeat(8, 1fr); align-items:center; font-family:"Helvetica Neue",Arial,sans-serif; font-size: .68rem; color: var(--ink-soft); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .05em; }
+  .month-row .label{ grid-column: 1; }
+  .month-cell{ text-align:center; border-left: 1px solid var(--line); padding-bottom:4px; }
+
+  .setting-group{ margin-bottom: 22px; }
+  .setting-title{ font-family:"Helvetica Neue",Arial,sans-serif; font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--teal-deep); margin-bottom: 8px; padding-bottom: 6px; border-bottom: 2px solid var(--teal-deep); display:flex; justify-content:space-between; }
+  .setting-title .cnt{ color: var(--ink-soft); font-weight:400; text-transform:none; letter-spacing:0; }
+
+  .tl-row{ display:grid; grid-template-columns: 150px 1fr; align-items:center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #f0ede4; }
+  .tl-row:last-child{ border-bottom:none; }
+  .tl-name{ font-family:"Helvetica Neue",Arial,sans-serif; font-size: .8rem; }
+  .tl-name .full{ font-weight:700; display:block; cursor: help; }
+  .tl-name .corso-tag{ font-size:.62rem; font-weight:700; padding:1px 5px; border-radius:3px; margin-left:5px; vertical-align:middle; }
+  .tl-name .corso-tag.inf{ background:#e7eef4; color:var(--sky); }
+  .tl-name .corso-tag.oss{ background:#fdf1e2; color:var(--amber); }
+  .tl-name .tutor-line{ font-size: .68rem; color: var(--ink-soft); }
+  .tl-name .tutor-line.missing-tutor{ color: var(--rose); font-weight:600; }
+  .tl-track{ position: relative; height: 22px; background: repeating-linear-gradient(to right, transparent, transparent calc(12.5% - 1px), var(--line) calc(12.5% - 1px), var(--line) 12.5%); }
+  .tl-bar{ position:absolute; top: 2px; height: 18px; border-radius: 4px; background: var(--teal); display:flex; align-items:center; padding: 0 8px; font-family:"Helvetica Neue",Arial,sans-serif; font-size: .65rem; color: #fff; font-weight: 600; white-space:nowrap; overflow:hidden; box-shadow: 0 1px 2px rgba(0,0,0,.15); gap:4px; }
+  .tl-bar.h24{ background: var(--rose); }
+  .tl-bar.missing-data{ outline: 2px dashed var(--amber); outline-offset: 1px; }
+  .tl-bar.concluded{ opacity:.45; box-shadow:none; background-image: repeating-linear-gradient(135deg, rgba(255,255,255,.15) 0 4px, transparent 4px 8px); }
+  .tl-bar.not-started{ opacity:.55; box-shadow:none; background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.2) 0 4px, transparent 4px 8px); }
+  .tl-bar.sospeso{ opacity:.5; box-shadow:none; background:var(--ink-soft) !important; background-image: repeating-linear-gradient(90deg, rgba(255,255,255,.25) 0 4px, transparent 4px 8px); }
+  .tl-bar .eval-badge{ flex-shrink:0; font-size:.78rem; line-height:1; color:#ffd966; }
+  .tl-row .status-tag{ font-size:.62rem; font-weight:700; padding:1px 6px; border-radius:3px; margin-left:5px; vertical-align:middle; }
+  .tl-row .status-tag.concluded{ background:#ece8de; color:var(--ink-soft); }
+  .tl-row .status-tag.active{ background:#e3efea; color:var(--teal-deep); }
+  .tl-row .status-tag.not-started{ background:#e7eef4; color:var(--sky); }
+  .tl-row .status-tag.sospeso{ background:#ece8de; color:var(--rose); border:1px solid var(--rose); }
+
+  .legend{ display:flex; flex-wrap:wrap; gap: 16px; font-family:"Helvetica Neue",Arial,sans-serif; font-size: .74rem; color: var(--ink-soft); margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .legend .item{ display:flex; align-items:center; gap:6px; }
+  .legend .sw{ width:12px; height:12px; border-radius:3px; display:inline-block; }
+
+  .empty-state{ text-align:center; padding: 50px 20px; color: var(--ink-soft); font-family:"Helvetica Neue",Arial,sans-serif; }
+  .loading-state{ text-align:center; padding: 70px 20px; color: var(--ink-soft); font-family:"Helvetica Neue",Arial,sans-serif; }
+
+  footer.foot{ margin-top: 30px; font-family:"Helvetica Neue",Arial,sans-serif; font-size: .72rem; color: var(--ink-soft); text-align:center; }
+
+  @media (max-width: 760px){
+    .stats{ grid-template-columns: repeat(2,1fr); }
+    table.roster{ font-size:.76rem; }
+    .tl-row{ grid-template-columns: 110px 1fr; }
+    .month-row{ display:none; }
+    h1{ font-size:1.5rem; }
+    .top-meta{ text-align:left; }
+    header.top{ flex-direction:column; align-items:flex-start; }
+    .sync-row{ justify-content:flex-start; }
+  }
+
+  /* ---------- LOGIN GATE ---------- */
+  #loginGate{
+    position:fixed; inset:0; background:var(--bg); z-index:1000;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .login-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:6px;
+    padding:36px 32px; max-width:380px; width:100%;
+    box-shadow:0 4px 24px rgba(31,42,38,.08);
+  }
+  .login-card .brand-eyebrow{ text-align:center; }
+  .login-card h1{ font-size:1.5rem; text-align:center; margin-bottom:22px; }
+  .login-card input[type=password]{
+    width:100%; padding:11px 13px; border:1px solid var(--line); border-radius:4px;
+    font-family:"Helvetica Neue",Arial,sans-serif; font-size:.95rem; margin-bottom:12px;
+  }
+  .login-card input[type=password]:focus{ outline:2px solid var(--teal); outline-offset:1px; }
+  .login-card button{
+    width:100%; padding:11px; border:none; border-radius:4px;
+    background:var(--teal-deep); color:#fff; font-family:"Helvetica Neue",Arial,sans-serif;
+    font-size:.92rem; font-weight:600; cursor:pointer;
+  }
+  .login-card button:hover{ background:var(--ink); }
+  .login-error{
+    color:var(--rose); font-family:"Helvetica Neue",Arial,sans-serif; font-size:.8rem;
+    text-align:center; margin-top:10px; min-height:1.2em;
+  }
+  .login-note{
+    color:var(--ink-soft); font-family:"Helvetica Neue",Arial,sans-serif; font-size:.7rem;
+    text-align:center; margin-top:18px; line-height:1.5;
+  }
+  #appContent{ display:none; }
+</style>
+</head>
+<body>
+
+<div id="loginGate">
+  <div class="login-card">
+    <div class="brand-eyebrow">Azienda USL Toscana Centro · Zona Mugello</div>
+    <h1>Accesso protetto</h1>
+    <form id="loginForm">
+      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" autofocus>
+      <button type="submit">Entra</button>
+      <div class="login-error" id="loginError"></div>
+    </form>
+    <div class="login-note">Dashboard studenti infermieristica e OSS · accesso riservato al coordinatore di zona</div>
+  </div>
+</div>
+
+<div id="appContent">
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <div class="brand-eyebrow">Azienda USL Toscana Centro · Zona Mugello</div>
+      <h1>Dashboard studenti <em>infermieristica e OSS</em></h1>
+    </div>
+    <div class="top-meta">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:.78rem;color:var(--ink-soft);">Anno:</label>
+        <select id="yearSelect" style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:.82rem;padding:5px 8px;border:1px solid var(--line);border-radius:3px;background:var(--paper);color:var(--ink);"></select>
+        <span style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:.78rem;color:var(--ink-soft);">· <span id="studentCountMeta">—</span> studenti</span>
+      </div>
+      <div class="sync-row">
+        <span class="sync-status loading" id="syncStatus"><span class="dot"></span> Caricamento dati…</span>
+        <button class="btn-refresh" id="btnRefresh">↻ Aggiorna</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="print-header" id="printHeader"></div>
+
+  <div class="error-banner" id="errorBanner">
+    <b>Impossibile caricare i dati dal foglio Google.</b><br>
+    Verifica di avere connessione internet e che il foglio sia ancora pubblicato (File → Condividi → Pubblica sul web). Dettaglio tecnico: <code id="errorDetail"></code>
+  </div>
+
+  <div class="alert-banner" id="alertBanner" style="display:none;">
+    <span class="ico">⚠</span>
+    <div><b id="alertCount">—</b> <span id="alertText"></span></div>
+  </div>
+
+  <div class="stats sans" id="statsRow"></div>
+
+  <div class="controls">
+    <input type="search" id="searchBox" placeholder="Cerca per nome, cognome, tutor o reparto…">
+    <select id="settingFilter"><option value="">Tutti i reparti</option></select>
+    <select id="annoFilter"><option value="">Tutti gli anni</option></select>
+    <select id="corsoFilter"><option value="">Tutti i corsi</option><option value="INF">Infermieristica</option><option value="OSS">OSS</option></select>
+    <div class="chip-toggle active-teal" id="hideConcludedToggle">Solo in corso</div>
+    <div class="chip-toggle" id="sospesiToggle">Mostra sospesi</div>
+    <div class="chip-toggle" id="missingToggle">Solo dati mancanti</div>
+    <div class="view-toggle">
+      <button id="btnViewTimeline" class="active">Calendario</button>
+      <button id="btnViewTable">Elenco</button>
+    </div>
+    <div class="print-actions">
+      <a class="btn-print sheet-link" href="https://docs.google.com/spreadsheets/d/1aLhvV7ZdcjMiyVHRCgbp4JayLfKC_1e0AHRbqasi41s/edit" target="_blank" rel="noopener">📝 Apri Google Sheet</a>
+      <button class="btn-print" id="btnPrint" type="button">🖶 Stampa</button>
+      <button class="btn-print secondary" id="btnExportPdf" type="button">⬇ Esporta PDF</button>
+    </div>
+    <div class="period-filter">
+      <label>Filtra per periodo:</label>
+      <span class="sep">dal</span>
+      <input type="date" id="periodFrom" title="Data inizio periodo">
+      <span class="sep">al</span>
+      <input type="date" id="periodTo" title="Data fine periodo">
+      <button class="btn-reset-period" id="btnResetPeriod" type="button">✕ Azzera periodo</button>
+      <span id="periodActiveNote" style="display:none;font-size:.72rem;color:var(--teal-deep);font-weight:600;">● Filtro periodo attivo</span>
+    </div>
+  </div>
+
+  <div class="panel" id="loadingPanel">
+    <div class="loading-state">Caricamento turni dal foglio Google…</div>
+  </div>
+
+  <div class="panel" id="timelineView" style="display:none;">
+    <div class="timeline-wrap">
+      <div class="month-row" id="monthRow"></div>
+      <div id="timelineBody"></div>
+      <div class="legend">
+        <div class="item"><span class="sw" style="background:var(--teal)"></span> Turno H12</div>
+        <div class="item"><span class="sw" style="background:var(--rose)"></span> Turno H24</div>
+        <div class="item"><span class="sw" style="background:transparent;border:2px dashed var(--amber);"></span> Scheda con dati mancanti</div>
+        <div class="item"><span class="sw" style="background:var(--sky);opacity:.55;background-image:repeating-linear-gradient(45deg, rgba(255,255,255,.5) 0 3px, transparent 3px 6px);"></span> Non ancora iniziato</div>
+        <div class="item"><span class="sw" style="background:var(--teal);opacity:.45;background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.5) 0 3px, transparent 3px 6px);"></span> Concluso</div>
+        <div class="item"><span class="sw" style="background:var(--ink-soft);opacity:.5;background-image:repeating-linear-gradient(90deg, rgba(255,255,255,.5) 0 3px, transparent 3px 6px);"></span> Sospeso</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="tableView" style="display:none;">
+    <table class="roster">
+      <thead>
+        <tr>
+          <th>Studente</th><th>Corso</th><th>Anno</th><th>Periodo</th><th>Reparto</th>
+          <th>Orario</th><th>Tutor</th><th>Accoglienza</th><th>Note / Valutazione</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+    <div class="empty-state" id="tableEmpty" style="display:none;">Nessuno studente corrisponde ai filtri selezionati.</div>
+  </div>
+
+  <footer class="foot">
+    Dati sincronizzati dal Google Sheet "Turni Studenti Mugello" · modifica da Google Sheets (app o browser), la dashboard si aggiorna automaticamente · sola consultazione
+    <br>v1.4 · Enrico Dolabelli · Azienda USL Toscana Centro, Zona Mugello
+  </footer>
+
+</div>
+</div>
+
+<script>
+const PASSWORD_HASH = '879bb0f1b5e0d892fbc3533eb42f044027b8bcd416d252443afa02069af027d8';
+const SESSION_KEY = 'turni-mugello-auth';
+
+async function sha256(text){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function unlockApp(){
+  document.getElementById('loginGate').style.display = 'none';
+  document.getElementById('appContent').style.display = 'block';
+  initApp();
+}
+
+async function tryLogin(pwd){
+  const hash = await sha256(pwd);
+  if(hash === PASSWORD_HASH){
+    sessionStorage.setItem(SESSION_KEY, '1');
+    unlockApp();
+    return true;
+  }
+  return false;
+}
+
+document.getElementById('loginForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const pwd = document.getElementById('loginPassword').value;
+  const ok = await tryLogin(pwd);
+  if(!ok){
+    document.getElementById('loginError').textContent = 'Password non corretta. Riprova.';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginPassword').focus();
+  }
+});
+
+if(sessionStorage.getItem(SESSION_KEY) === '1'){
+  unlockApp();
+}
+
+// ---------- Configurazione anni disponibili ----------
+// URL del proxy Google Apps Script (sostituisce la funzione Netlify)
+const PROXY_URL = 'https://script.google.com/macros/s/AKfycbx0JgkwZW5GGYaHM0U_2NC_XOX59ScRHaogxpDR3bJgj1JcMtrO03WRzBac4hrdyAEB/exec';
+
+// Anni disponibili: aggiungere qui i nuovi anni quando si crea il tab nel foglio
+// e si aggiorna lo script Google Apps Script con il nuovo URL CSV
+const SHEET_YEARS = [
+  { anno: 2026 },
+  // { anno: 2027 },
+];
+
+const CURRENT_YEAR = new Date().getFullYear();
+const REFRESH_INTERVAL_MS = 60000;
+
+const MONTH_NAMES = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+// TIMELINE_START / TIMELINE_END / totalDays: calcolati dinamicamente da computeTimelineRange()
+
+let DATA = [];
+let autoRefreshTimer = null;
+
+function parseCSV(text){
+  const rows = [];
+  let row = [], field = '', inQuotes = false;
+  for(let i=0; i<text.length; i++){
+    const c = text[i], next = text[i+1];
+    if(inQuotes){
+      if(c === '"' && next === '"'){ field += '"'; i++; }
+      else if(c === '"'){ inQuotes = false; }
+      else { field += c; }
+    } else {
+      if(c === '"'){ inQuotes = true; }
+      else if(c === ','){ row.push(field); field = ''; }
+      else if(c === '\n' || c === '\r'){
+        if(c === '\r' && next === '\n') i++;
+        row.push(field); rows.push(row); row = []; field = '';
+      } else { field += c; }
+    }
+  }
+  if(field.length || row.length){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.length > 1 || (r[0] && r[0].trim() !== ''));
+}
+
+function csvToStudents(text){
+  if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = parseCSV(text);
+  if(rows.length < 2) return [];
+  const headerRow = rows[0].map(h => h.trim().toUpperCase());
+  const idx = {
+    id: headerRow.indexOf('ID'),
+    nome: headerRow.indexOf('NOME'),
+    cognome: headerRow.indexOf('COGNOME'),
+    corso: headerRow.indexOf('CORSO'),
+    dataInizio: headerRow.indexOf('DATA INIZIO'),
+    dataFine: headerRow.indexOf('DATA FINE'),
+    dataFineProroga: headerRow.indexOf('DATA FINE PROROGA'),
+    anno: headerRow.findIndex(h => h.startsWith('ANNO')),
+    tipoOrario: headerRow.indexOf('TIPO DI ORARIO'),
+    setting: headerRow.indexOf('SETTING'),
+    orario: headerRow.indexOf('ORARIO'),
+    tutor: headerRow.indexOf('TUTOR'),
+    accoglienza: headerRow.indexOf('ACCOGLIENZA'),
+    note: headerRow.indexOf('NOTE'),
+    stato: headerRow.indexOf('STATO'),
+  };
+  const clean = v => (v === undefined || v === null) ? null : (v.trim() === '' ? null : v.trim());
+  const students = [];
+  for(let r = 1; r < rows.length; r++){
+    const cells = rows[r];
+    const nome = clean(cells[idx.nome]);
+    if(!nome) continue;
+    students.push({
+      id: clean(cells[idx.id]) || String(r),
+      nome,
+      cognome: clean(cells[idx.cognome]) || '',
+      corso: clean(cells[idx.corso]),
+      dataInizio: clean(cells[idx.dataInizio]),
+      dataFine: clean(cells[idx.dataFine]),
+      dataFineProroga: clean(cells[idx.dataFineProroga]),
+      anno: Number(clean(cells[idx.anno])) || null,
+      tipoOrario: clean(cells[idx.tipoOrario]),
+      setting: clean(cells[idx.setting]) || 'NON SPECIFICATO',
+      orario: clean(cells[idx.orario]),
+      tutor: clean(cells[idx.tutor]),
+      accoglienza: clean(cells[idx.accoglienza]),
+      note: clean(cells[idx.note]),
+      stato: (clean(cells[idx.stato]) || 'ATTIVO').toUpperCase(),
+    });
+  }
+  return students;
+}
+
+function buildYearSelector(){
+  const sel = document.getElementById('yearSelect');
+  sel.innerHTML = '';
+  const optAll = document.createElement('option');
+  optAll.value = 'all';
+  optAll.textContent = 'Tutti gli anni';
+  sel.appendChild(optAll);
+  SHEET_YEARS.forEach(y => {
+    const opt = document.createElement('option');
+    opt.value = String(y.anno);
+    opt.textContent = String(y.anno);
+    sel.appendChild(opt);
+  });
+  const hasCurrentYear = SHEET_YEARS.some(y => y.anno === CURRENT_YEAR);
+  if(hasCurrentYear){
+    sel.value = String(CURRENT_YEAR);
+  } else {
+    const latest = SHEET_YEARS[SHEET_YEARS.length - 1];
+    sel.value = latest ? String(latest.anno) : 'all';
+  }
+  sel.addEventListener('change', () => fetchData(true));
+}
+
+async function fetchData(isManual){
+  const statusEl = document.getElementById('syncStatus');
+  const errorBanner = document.getElementById('errorBanner');
+  statusEl.className = 'sync-status loading';
+  statusEl.innerHTML = '<span class="dot"></span> ' + (isManual ? 'Aggiornamento…' : 'Caricamento dati…');
+
+  const yearSel = document.getElementById('yearSelect');
+  const selectedYear = yearSel ? yearSel.value : String(CURRENT_YEAR);
+
+  let targets = [];
+  if(selectedYear === 'all'){
+    targets = SHEET_YEARS;
+  } else {
+    const found = SHEET_YEARS.find(y => String(y.anno) === selectedYear);
+    if(found) targets = [found];
+  }
+
+  try{
+    const results = await Promise.all(targets.map(async t => {
+      const proxyUrl = PROXY_URL + '?year=' + t.anno + '&_=' + Date.now();
+      const res = await fetch(proxyUrl, { cache: 'no-store' });
+      if(!res.ok) throw new Error('HTTP ' + res.status + ' per anno ' + t.anno);
+      const text = await res.text();
+      return csvToStudents(text);
+    }));
+
+    const parsed = results.flat();
+    if(parsed.length === 0) throw new Error('Nessuna riga valida trovata nel foglio');
+    DATA = parsed;
+    errorBanner.classList.remove('show');
+    document.getElementById('loadingPanel').style.display = 'none';
+    statusEl.className = 'sync-status';
+    const now = new Date();
+    statusEl.innerHTML = `<span class="dot"></span> Aggiornato alle ${now.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})}`;
+    refreshAll();
+  } catch(err){
+    statusEl.className = 'sync-status error';
+    statusEl.innerHTML = '<span class="dot"></span> Errore di sincronizzazione';
+    if(DATA.length === 0){
+      document.getElementById('errorDetail').textContent = err.message;
+      errorBanner.classList.add('show');
+      document.getElementById('loadingPanel').style.display = 'none';
+    }
+  }
+}
+
+function parseLocalDate(iso){
+  if(!iso) return null;
+  const s = iso.trim();
+  let m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if(m) return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/.exec(s);
+  if(m) return new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1]));
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
+function fmtDate(iso){
+  if(!iso) return '—';
+  const d = parseLocalDate(iso);
+  if(!d) return iso;
+  return d.toLocaleDateString('it-IT', {day:'2-digit', month:'short'});
+}
+
+function missingFields(s){
+  const miss = [];
+  if(!s.tutor) miss.push('Tutor');
+  if(!s.accoglienza) miss.push('Accoglienza');
+  if(!s.note) miss.push('Note/Valutazione');
+  if(!s.orario) miss.push('Orario');
+  return miss;
+}
+function hasMissing(s){ return missingFields(s).length > 0; }
+
+function isConcluded(s){
+  const endIso = s.dataFineProroga || s.dataFine;
+  const end = parseLocalDate(endIso);
+  if(!end) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  return end < today;
+}
+
+function isNotStarted(s){
+  const start = parseLocalDate(s.dataInizio);
+  if(!start) return false;
+  const today = new Date(); today.setHours(0,0,0,0);
+  return start > today;
+}
+
+function isSospeso(s){
+  return s.stato === 'SOSPESO';
+}
+
+function hasEvaluation(s){
+  if(!s.note) return false;
+  return /VALUTAZION\w*\s*S[IÌ]/i.test(s.note);
+}
+
+function escapeAttr(str){
+  return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+const settingSel = document.getElementById('settingFilter');
+const annoSel = document.getElementById('annoFilter');
+const corsoSel = document.getElementById('corsoFilter');
+
+function refreshFilterOptions(){
+  const settings = [...new Set(DATA.map(s=>s.setting))].sort();
+  const anni = [...new Set(DATA.map(s=>s.anno).filter(Boolean))].sort((a,b)=>a-b);
+  const curSetting = settingSel.value, curAnno = annoSel.value;
+  settingSel.innerHTML = '<option value="">Tutti i reparti</option>' + settings.map(s=>`<option value="${s}">${s}</option>`).join('');
+  annoSel.innerHTML = '<option value="">Tutti gli anni</option>' + anni.map(a=>`<option value="${a}">${a}° anno</option>`).join('');
+  settingSel.value = settings.includes(curSetting) ? curSetting : '';
+  annoSel.value = anni.map(String).includes(curAnno) ? curAnno : '';
+}
+
+function renderStats(list){
+  list = (list || DATA).filter(s => !isSospeso(s));
+  const totMissing = list.filter(hasMissing).length;
+  const totH24 = list.filter(s=>s.tipoOrario==='H 24').length;
+  const repartiAttivi = new Set(list.map(s=>s.setting)).size;
+  const noTutor = list.filter(s=>!s.tutor).length;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat"><div class="n">${list.length}</div><div class="l">Studenti totali</div></div>
+    <div class="stat"><div class="n">${repartiAttivi}</div><div class="l">Reparti coinvolti</div></div>
+    <div class="stat"><div class="n">${totH24}</div><div class="l">Turni H24</div></div>
+    <div class="stat"><div class="n warn">${noTutor}</div><div class="l">Senza tutor assegnato</div></div>
+    <div class="stat"><div class="n warn">${totMissing}</div><div class="l">Schede incomplete</div></div>
+  `;
+  document.getElementById('studentCountMeta').textContent = list.length;
+  const banner = document.getElementById('alertBanner');
+  if(totMissing === 0){
+    banner.style.display = 'none';
+  } else {
+    banner.style.display = 'flex';
+    document.getElementById('alertCount').textContent = `${totMissing} su ${list.length} schede`;
+    document.getElementById('alertText').innerHTML = `hanno almeno un campo non compilato (tutor, accoglienza, note o orario). Sono evidenziate con <span style="color:var(--rose);font-weight:700;">⚠</span> qui sotto: completarle direttamente nel foglio Google per avere il quadro pieno.`;
+  }
+}
+
+function renderMonthRow(){
+  const row = document.getElementById('monthRow');
+  const nMonths = (TIMELINE_END.getFullYear() - TIMELINE_START.getFullYear()) * 12
+                + (TIMELINE_END.getMonth() - TIMELINE_START.getMonth());
+  row.style.gridTemplateColumns = `150px repeat(${nMonths}, 1fr)`;
+  let html = '<div class="label">Reparto / Studente</div>';
+  for(let i = 0; i < nMonths; i++){
+    const d = new Date(TIMELINE_START.getFullYear(), TIMELINE_START.getMonth() + i, 1);
+    const label = d.getFullYear() !== new Date().getFullYear()
+      ? `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`
+      : MONTH_NAMES[d.getMonth()];
+    html += `<div class="month-cell">${label}</div>`;
+  }
+  row.innerHTML = html;
+  const pct = (100 / nMonths).toFixed(4);
+  const styleId = 'dynamic-tl-track';
+  let styleEl = document.getElementById(styleId);
+  if(!styleEl){ styleEl = document.createElement('style'); styleEl.id = styleId; document.head.appendChild(styleEl); }
+  styleEl.textContent = `.tl-track { background: repeating-linear-gradient(to right, transparent, transparent calc(${pct}% - 1px), var(--line) calc(${pct}% - 1px), var(--line) ${pct}%); }`;
+}
+
+// ---------- Range timeline dinamico ----------
+let TIMELINE_START = new Date(new Date().getFullYear(), 0, 1);
+let TIMELINE_END   = new Date(new Date().getFullYear(), 11, 31);
+let totalDays      = (TIMELINE_END - TIMELINE_START) / 86400000;
+
+function computeTimelineRange(){
+  const dates = [];
+  DATA.forEach(s => {
+    const d1 = parseLocalDate(s.dataInizio);
+    const d2 = parseLocalDate(s.dataFineProroga || s.dataFine);
+    if(d1) dates.push(d1);
+    if(d2) dates.push(d2);
+  });
+  if(dates.length === 0) return;
+
+  const minDate = new Date(Math.min(...dates));
+  const maxDate = new Date(Math.max(...dates));
+
+  // Margine di 3 settimane
+  const MARGIN_MS = 21 * 86400000;
+  let start = new Date(minDate.getTime() - MARGIN_MS);
+  let end   = new Date(maxDate.getTime() + MARGIN_MS);
+
+  // Arrotondo all'inizio/fine mese
+  TIMELINE_START = new Date(start.getFullYear(), start.getMonth(), 1);
+  TIMELINE_END   = new Date(end.getFullYear(), end.getMonth() + 1, 1);
+  totalDays      = (TIMELINE_END - TIMELINE_START) / 86400000;
+}
+
+function dayOffset(iso){
+  const d = parseLocalDate(iso);
+  if(!d) return 0;
+  return Math.max(0, Math.min(totalDays, (d - TIMELINE_START) / 86400000));
+}
+
+function renderTimeline(filtered){
+  const body = document.getElementById('timelineBody');
+  if(filtered.length === 0){
+    body.innerHTML = '<div class="empty-state">Nessuno studente corrisponde ai filtri selezionati.</div>';
+    return;
+  }
+  const grouped = {};
+  filtered.forEach(s=>{ (grouped[s.setting] = grouped[s.setting] || []).push(s); });
+  const orderedSettings = Object.keys(grouped).sort();
+  let html = '';
+  orderedSettings.forEach(setting=>{
+    const list = grouped[setting];
+    html += `<div class="setting-group"><div class="setting-title"><span>${setting}</span><span class="cnt">${list.length} student${list.length===1?'e':'i'}</span></div>`;
+    list.sort((a,b)=> (parseLocalDate(a.dataInizio) || 0) - (parseLocalDate(b.dataInizio) || 0));
+    list.forEach(s=>{
+      const corsoTag = s.corso === 'INF' ? '<span class="corso-tag inf">INF</span>' : (s.corso === 'OSS' ? '<span class="corso-tag oss">OSS</span>' : '');
+      const sospeso = isSospeso(s);
+      if(!s.dataInizio || !s.dataFine){
+        html += `<div class="tl-row">
+          <div class="tl-name"><span class="full" title="${escapeAttr(s.note || 'Nessuna nota')}">${s.nome} ${s.cognome}${corsoTag}${sospeso?'<span class="status-tag sospeso">Sospeso</span>':''}</span><span class="tutor-line missing-tutor">⚠ Date mancanti</span></div>
+          <div class="tl-track"></div></div>`;
+        return;
+      }
+      const left = (dayOffset(s.dataInizio) / totalDays) * 100;
+      const width = Math.max(2, ((dayOffset(s.dataFine) - dayOffset(s.dataInizio)) / totalDays) * 100);
+      const cls = s.tipoOrario === 'H 24' ? 'h24' : '';
+      const miss = hasMissing(s);
+      const concluded = isConcluded(s);
+      const notStarted = !concluded && isNotStarted(s);
+      const evaluated = hasEvaluation(s);
+      const tutorLine = s.tutor ? `Tutor: ${s.tutor}` : '⚠ Tutor non assegnato';
+      const statusTag = sospeso
+        ? '<span class="status-tag sospeso">Sospeso</span>'
+        : (concluded
+          ? '<span class="status-tag concluded">Concluso</span>'
+          : (notStarted
+            ? '<span class="status-tag not-started">Non iniziato</span>'
+            : '<span class="status-tag active">In corso</span>'));
+      const statusLabel = sospeso ? 'Sospeso' : (concluded ? 'Concluso' : (notStarted ? 'Non iniziato' : 'In corso'));
+      const evalBadge = evaluated ? '<span class="eval-badge" title="Valutazione consegnata">★</span>' : '';
+      html += `<div class="tl-row">
+        <div class="tl-name"><span class="full" title="${escapeAttr(s.note || 'Nessuna nota')}">${s.nome} ${s.cognome}${corsoTag}${statusTag}</span><span class="tutor-line ${!s.tutor?'missing-tutor':''}">${tutorLine}</span></div>
+        <div class="tl-track">
+          <div class="tl-bar ${cls} ${miss?'missing-data':''} ${concluded && !sospeso?'concluded':''} ${notStarted && !sospeso?'not-started':''} ${sospeso?'sospeso':''}" style="left:${left}%; width:${width}%;" title="${s.nome} ${s.cognome} · ${fmtDate(s.dataInizio)} – ${fmtDate(s.dataFine)} · ${statusLabel}${evaluated?' · Valutazione consegnata':''}${miss?' · Dati mancanti: '+missingFields(s).join(', '):''}">
+            ${evalBadge}${fmtDate(s.dataInizio)}–${fmtDate(s.dataFine)}
+          </div>
+        </div></div>`;
+    });
+    html += `</div>`;
+  });
+  body.innerHTML = html;
+}
+
+function renderTable(filtered){
+  const tbody = document.getElementById('tableBody');
+  const emptyState = document.getElementById('tableEmpty');
+  if(filtered.length === 0){ tbody.innerHTML = ''; emptyState.style.display = 'block'; return; }
+  emptyState.style.display = 'none';
+  const annoBadgeClass = a => a===1?'badge-anno1': a===2?'badge-anno2':'badge-anno3';
+  tbody.innerHTML = filtered.map(s=>{
+    const miss = hasMissing(s);
+    const sospeso = isSospeso(s);
+    const tutorCell = s.tutor ? s.tutor : `<span class="missing">Mancante</span>`;
+    const accoglienzaCell = s.accoglienza === 'SI' ? `<span class="ok-dot">✓ Sì</span>` : (s.accoglienza === 'NO' ? `<span class="no-dot">No</span>` : `<span class="missing">Mancante</span>`);
+    const noteCell = s.note ? `${hasEvaluation(s) ? '<span title="Valutazione consegnata">★</span> ' : ''}${s.note}` : `<span class="missing">Mancante</span>`;
+    const orarioCell = s.orario ? (s.orario === 'SI' ? '<span class="ok-dot">✓ Sì</span>' : `<span class="no-dot">${s.orario}</span>`) : `<span class="missing">Mancante</span>`;
+    const corsoCell = s.corso === 'INF' ? '<span class="badge badge-corso-inf">INF</span>' : (s.corso === 'OSS' ? '<span class="badge badge-corso-oss">OSS</span>' : '<span class="missing">Mancante</span>');
+    const sospesoTag = sospeso ? ' <span class="status-tag sospeso">Sospeso</span>' : '';
+    return `<tr class="${miss?'row-missing':''} ${sospeso?'row-sospeso':''}">
+      <td><span class="student-name" title="${escapeAttr(s.note || 'Nessuna nota')}" style="cursor:help;">${s.nome} ${s.cognome}</span>${sospesoTag}<br><span class="student-sub">${s.tipoOrario||'—'}</span></td>
+      <td>${corsoCell}</td>
+      <td>${s.anno ? `<span class="badge ${annoBadgeClass(s.anno)}">${s.anno}° anno</span>` : '<span class="missing">Mancante</span>'}</td>
+      <td>${fmtDate(s.dataInizio)} – ${fmtDate(s.dataFine)}${s.dataFineProroga ? `<br><span class="student-sub">proroga: ${fmtDate(s.dataFineProroga)}</span>` : ''}</td>
+      <td>${s.setting}</td>
+      <td>${orarioCell}</td>
+      <td>${tutorCell}</td>
+      <td>${accoglienzaCell}</td>
+      <td>${noteCell}</td>
+    </tr>`;
+  }).join('');
+}
+
+let onlyMissing = false;
+let hideConcluded = true;
+let showSospesi = false;
+let periodFrom = null; // Date object o null
+let periodTo = null;   // Date object o null
+
+function getFilteredData(){
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  const setting = settingSel.value, anno = annoSel.value, corso = corsoSel.value;
+  return DATA.filter(s=>{
+    if(setting && s.setting !== setting) return false;
+    if(anno && String(s.anno) !== anno) return false;
+    if(corso && s.corso !== corso) return false;
+    if(isSospeso(s) && !showSospesi) return false;
+    if(hideConcluded && !isSospeso(s) && (isConcluded(s) || isNotStarted(s))) return false;
+    if(onlyMissing && !hasMissing(s)) return false;
+    // Filtro periodo: include lo studente se il suo tirocinio si sovrappone al range selezionato
+    if(periodFrom || periodTo){
+      const sStart = parseLocalDate(s.dataInizio);
+      const sEnd   = parseLocalDate(s.dataFineProroga || s.dataFine);
+      if(!sStart || !sEnd) return false;
+      if(periodFrom && sEnd < periodFrom) return false;   // finisce prima del range
+      if(periodTo   && sStart > periodTo) return false;   // inizia dopo il range
+    }
+    if(q){
+      const hay = `${s.nome} ${s.cognome} ${s.tutor||''} ${s.setting}`.toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function applyFilters(){
+  const filtered = getFilteredData();
+  renderTimeline(filtered);
+  renderTable(filtered);
+}
+
+function refreshAll(){
+  document.getElementById('timelineView').style.display = document.getElementById('btnViewTimeline').classList.contains('active') ? 'block' : 'none';
+  document.getElementById('tableView').style.display = document.getElementById('btnViewTable').classList.contains('active') ? 'block' : 'none';
+  refreshFilterOptions();
+  computeTimelineRange();
+  renderMonthRow();
+  renderStats();
+  applyFilters();
+}
+
+document.getElementById('searchBox').addEventListener('input', applyFilters);
+settingSel.addEventListener('change', applyFilters);
+annoSel.addEventListener('change', applyFilters);
+corsoSel.addEventListener('change', applyFilters);
+document.getElementById('hideConcludedToggle').addEventListener('click', function(){
+  hideConcluded = !hideConcluded;
+  this.classList.toggle('active-teal', hideConcluded);
+  applyFilters();
+});
+
+document.getElementById('missingToggle').addEventListener('click', function(){
+  onlyMissing = !onlyMissing;
+  this.classList.toggle('active', onlyMissing);
+  applyFilters();
+});
+
+document.getElementById('sospesiToggle').addEventListener('click', function(){
+  showSospesi = !showSospesi;
+  this.classList.toggle('active', showSospesi);
+  applyFilters();
+});
+
+const btnTimeline = document.getElementById('btnViewTimeline');
+const btnTable = document.getElementById('btnViewTable');
+btnTimeline.addEventListener('click', ()=>{
+  btnTimeline.classList.add('active'); btnTable.classList.remove('active');
+  document.getElementById('timelineView').style.display = 'block';
+  document.getElementById('tableView').style.display = 'none';
+});
+btnTable.addEventListener('click', ()=>{
+  btnTable.classList.add('active'); btnTimeline.classList.remove('active');
+  document.getElementById('tableView').style.display = 'block';
+  document.getElementById('timelineView').style.display = 'none';
+});
+
+document.getElementById('btnRefresh').addEventListener('click', ()=> fetchData(true));
+
+// ---------- Filtro periodo ----------
+function updatePeriodFilter(){
+  const fromVal = document.getElementById('periodFrom').value;
+  const toVal   = document.getElementById('periodTo').value;
+  periodFrom = fromVal ? parseLocalDate(fromVal) : null;
+  periodTo   = toVal   ? parseLocalDate(toVal)   : null;
+  // Evidenzia i campi attivi
+  document.getElementById('periodFrom').classList.toggle('active', !!periodFrom);
+  document.getElementById('periodTo').classList.toggle('active', !!periodTo);
+  // Mostra nota "filtro attivo"
+  const active = periodFrom || periodTo;
+  document.getElementById('periodActiveNote').style.display = active ? 'inline' : 'none';
+  // Se è attivo il filtro periodo, disattiva "Solo in corso" per mostrare anche i futuri
+  if(active && hideConcluded){
+    hideConcluded = false;
+    document.getElementById('hideConcludedToggle').classList.remove('active-teal');
+  }
+  applyFilters();
+}
+
+document.getElementById('periodFrom').addEventListener('change', updatePeriodFilter);
+document.getElementById('periodTo').addEventListener('change', updatePeriodFilter);
+
+document.getElementById('btnResetPeriod').addEventListener('click', ()=>{
+  document.getElementById('periodFrom').value = '';
+  document.getElementById('periodTo').value = '';
+  periodFrom = null;
+  periodTo = null;
+  document.getElementById('periodFrom').classList.remove('active');
+  document.getElementById('periodTo').classList.remove('active');
+  document.getElementById('periodActiveNote').style.display = 'none';
+  applyFilters();
+});
+
+function buildPrintHeader(){
+  const q = document.getElementById('searchBox').value.trim();
+  const setting = settingSel.value;
+  const anno = annoSel.value;
+  const activeView = document.getElementById('btnViewTimeline').classList.contains('active') ? 'Calendario' : 'Elenco';
+  const parts = [];
+  if(setting) parts.push(`Reparto: ${setting}`);
+  if(anno) parts.push(`Anno corso: ${anno}°`);
+  if(periodFrom || periodTo){
+    const da = periodFrom ? periodFrom.toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) : '…';
+    const al = periodTo   ? periodTo.toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'}) : '…';
+    parts.push(`Periodo: dal ${da} al ${al}`);
+  }
+  if(hideConcluded) parts.push('Solo tirocini in corso');
+  if(showSospesi) parts.push('Sospesi inclusi');
+  if(onlyMissing) parts.push('Solo schede con dati mancanti');
+  if(q) parts.push(`Ricerca: "${q}"`);
+  const filtersText = parts.length ? parts.join(' · ') : 'Nessun filtro attivo, elenco completo';
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('it-IT', {day:'2-digit', month:'long', year:'numeric'});
+  const timeStr = now.toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('printHeader').innerHTML = `
+    <div>Azienda USL Toscana Centro · Zona Mugello · Dashboard studenti infermieristica e OSS · Vista ${activeView}</div>
+    <div class="filters">${filtersText}</div>
+    <div>Stampato il ${dateStr} alle ${timeStr}</div>
+  `;
+}
+
+document.getElementById('btnPrint').addEventListener('click', ()=>{
+  buildPrintHeader();
+  renderStats(getFilteredData());
+  window.print();
+});
+
+document.getElementById('btnExportPdf').addEventListener('click', ()=>{
+  buildPrintHeader();
+  renderStats(getFilteredData());
+  alert('Si aprirà la finestra di stampa: scegli "Salva come PDF" tra le stampanti disponibili per ottenere il file.');
+  window.print();
+});
+
+window.addEventListener('afterprint', ()=> renderStats());
+
+buildYearSelector();
+
+function initApp(){
+  fetchData(false);
+  autoRefreshTimer = setInterval(()=> fetchData(false), REFRESH_INTERVAL_MS);
+}
+
+</script>
+</body>
+</html>
